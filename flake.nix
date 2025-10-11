@@ -28,14 +28,15 @@
           root;
       };
       ghcsFor = pkgs: with lib; foldlAttrs
-        (acc: name: hp:
+        (acc: name: hp':
           let
-            version = getVersion hp.ghc;
+            hp = tryEval hp';
+            version = getVersion hp.value.ghc;
             majorMinor = versions.majorMinor version;
             ghcName = "ghc${replaceStrings ["."] [""] majorMinor}";
           in
-          if hp ? ghc && ! acc ? ${ghcName} && versionAtLeast version "9.2" && versionOlder version "9.11"
-          then acc // { ${ghcName} = hp; }
+          if hp.value ? ghc && ! acc ? ${ghcName} && versionAtLeast version "9.2" && versionOlder version "9.12"
+          then acc // { ${ghcName} = hp.value; }
           else acc
         )
         { }

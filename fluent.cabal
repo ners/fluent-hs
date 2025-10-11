@@ -56,6 +56,7 @@ common common
     bytestring,
     containers,
     lens,
+    mono-traversable,
     semi-iso,
     syntax,
     syntax-attoparsec,
@@ -68,13 +69,19 @@ library
   build-depends:
 
   exposed-modules:
+    Util
     Language.Fluent
-    Language.Fluent.Identifier
+    Language.Fluent.Bundle
     Language.Fluent.Comment
-    Language.Fluent.Attribute
-    Language.Fluent.Message
+    Language.Fluent.Entry
     Language.Fluent.Expression
+    Language.Fluent.Identifier
     Language.Fluent.Literal
+    Language.Fluent.Message
+    Language.Fluent.Placeable
+    Language.Fluent.Resource
+
+  other-modules:
 
 test-suite spec
   import: common
@@ -87,3 +94,5 @@ test-suite spec
     QuickCheck,
     fluent,
     hspec,
+    syntax-printer,
+    pretty-simple,
