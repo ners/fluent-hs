@@ -1,4 +1,4 @@
-module Language.Fluent.Identifier where
+module Language.Fluent.Syntax.Identifier where
 
 import Control.Lens (Cons (_Cons), iso)
 import Control.Lens.TH (makePrisms)
@@ -11,7 +11,7 @@ import Data.Text qualified as Text
 import Prelude
 
 newtype Identifier = Identifier Text
-    deriving newtype (Show)
+    deriving newtype (Show, Eq)
 
 makePrisms ''Identifier
 

@@ -9,7 +9,7 @@ import Data.Bool qualified as Bool
 import Data.Maybe (isJust)
 import Data.MonoTraversable (MonoPointed (opoint))
 import Data.Syntax (Syntax (takeWhile, takeWhile1))
-import Data.Syntax.Char (SyntaxChar, SyntaxText, endOfLine, spaces)
+import Data.Syntax.Char (SyntaxChar, SyntaxText, endOfLine, spaces, spaces1)
 import Data.Syntax.Combinator (opt_, optional)
 import Data.Text (Text)
 import Data.Text qualified as Text
@@ -30,7 +30,7 @@ blankInline :: (SyntaxChar syn) => syn () ()
 blankInline = constant (opoint ' ') /$/ takeWhile1 (flip (elem @[]) " \t")
 
 blank :: (SyntaxChar syn) => syn () ()
-blank = spaces
+blank = spaces1
 
 blankBlock :: (SyntaxChar syn) => syn () ()
 blankBlock = constant [()] /$/ sisome (opt_ blankInline */ endOfLine)

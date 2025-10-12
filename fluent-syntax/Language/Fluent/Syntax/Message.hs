@@ -1,4 +1,4 @@
-module Language.Fluent.Message where
+module Language.Fluent.Syntax.Message where
 
 import Control.Lens (iso)
 import Control.Lens.TH (makePrisms)
@@ -6,9 +6,9 @@ import Control.SIArrow (SIArrow (simany, sisome), (/$/), (/*), (/*/))
 import Data.Syntax (Syntax (char))
 import Data.Syntax.Char (SyntaxChar)
 import Data.Syntax.Combinator (opt)
-import Language.Fluent.Comment
-import Language.Fluent.Expression
-import Language.Fluent.Identifier
+import Language.Fluent.Syntax.Comment
+import Language.Fluent.Syntax.Expression
+import Language.Fluent.Syntax.Identifier
 import Util (blankInline, either)
 import Prelude
 

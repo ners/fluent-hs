@@ -51,35 +51,48 @@ common common
     ViewPatterns
 
   build-depends:
-    attoparsec,
     base >=4.16 && <5,
     bytestring,
     containers,
     lens,
+    text,
+    unordered-containers,
+
+library fluent-syntax
+  import: common
+  hs-source-dirs: fluent-syntax
+  build-depends:
+    attoparsec,
     mono-traversable,
     semi-iso,
     syntax,
     syntax-attoparsec,
-    text,
-    unordered-containers,
-
-library
-  import: common
-  hs-source-dirs: src
-  build-depends:
 
   exposed-modules:
     Util
-    Language.Fluent
+    Language.Fluent.Syntax.Comment
+    Language.Fluent.Syntax.Entry
+    Language.Fluent.Syntax.Expression
+    Language.Fluent.Syntax.Identifier
+    Language.Fluent.Syntax.Literal
+    Language.Fluent.Syntax.Message
+    Language.Fluent.Syntax.Resource
+
+  other-modules:
+
+library fluent-bundle
+  import: common
+  hs-source-dirs: fluent-bundle
+  build-depends:
+    attoparsec,
+    extra,
+    fluent-syntax,
+
+  exposed-modules:
     Language.Fluent.Bundle
-    Language.Fluent.Comment
-    Language.Fluent.Entry
-    Language.Fluent.Expression
-    Language.Fluent.Identifier
-    Language.Fluent.Literal
+    Language.Fluent.Locale
     Language.Fluent.Message
-    Language.Fluent.Placeable
-    Language.Fluent.Resource
+    Language.Fluent.Value
 
   other-modules:
 
@@ -92,7 +105,10 @@ test-suite spec
   build-depends:
     Glob,
     QuickCheck,
-    fluent,
+    attoparsec,
+    fluent-syntax,
+    fluent-bundle,
     hspec,
-    syntax-printer,
     pretty-simple,
+    syntax-attoparsec,
+    syntax-printer,

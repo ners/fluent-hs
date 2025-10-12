@@ -1,4 +1,4 @@
-module Language.Fluent.Comment where
+module Language.Fluent.Syntax.Comment where
 
 import Control.Lens (Cons (_Cons), iso)
 import Control.Lens.TH (makePrisms)

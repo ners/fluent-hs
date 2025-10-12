@@ -1,15 +1,15 @@
-module Language.Fluent.Resource where
+module Language.Fluent.Syntax.Resource where
 
 import Control.Lens (iso)
 import Control.SIArrow (SIArrow (sisome), (/$/))
 import Data.Either (rights)
 import Data.Syntax.Char (SyntaxChar)
-import Language.Fluent.Entry
+import Language.Fluent.Syntax.Entry
 import Util (blankBlock)
 import Util qualified
 import Prelude
 
-newtype Resource = Resource [Entry]
+newtype Resource = Resource {entries :: [Entry]}
     deriving stock (Show)
 
 resource :: (SyntaxChar syn) => syn () Resource

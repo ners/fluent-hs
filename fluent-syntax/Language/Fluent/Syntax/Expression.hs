@@ -1,4 +1,4 @@
-module Language.Fluent.Expression where
+module Language.Fluent.Syntax.Expression where
 
 import Control.Arrow ((>>>))
 import Control.Category.Structures ((/+/))
@@ -11,11 +11,11 @@ import Data.Either (partitionEithers)
 import Data.Maybe (fromMaybe, isJust)
 import Data.Syntax (Syntax (char, satisfy))
 import Data.Syntax.Char (SyntaxChar, endOfLine)
-import Data.Syntax.Combinator (choice, opt, opt_, optional, sepBy1)
+import Data.Syntax.Combinator (choice, opt, opt_, optional, sepBy, sepBy1)
 import Data.Text (Text)
 import Debug.Trace (trace)
-import Language.Fluent.Identifier
-import Language.Fluent.Literal
+import Language.Fluent.Syntax.Identifier
+import Language.Fluent.Syntax.Literal
 import Util
 import Prelude
 
@@ -32,7 +32,7 @@ data InlineExpression
     | NumberLiteralExpression NumberLiteral
     | FunctionReference Identifier CallArguments
     | MessageReference Identifier (Maybe Identifier)
-    | TermReference Identifier (Maybe Attribute) (Maybe CallArguments)
+    | TermReference Identifier (Maybe Identifier) (Maybe CallArguments)
     | VariableReference Identifier
     | PlaceableExpression Expression
     deriving stock (Show)
@@ -60,7 +60,7 @@ newtype Pattern = Pattern [PatternElement]
 
 data CallArguments = CallArguments
     { positionalArguments :: [InlineExpression]
-    , namedArguments :: [(Identifier, InlineExpression)]
+    , namedArguments :: [(Identifier, Literal)]
     }
     deriving stock (Show)
 
@@ -86,11 +86,14 @@ attribute :: (SyntaxChar syn) => syn () Attribute
 attribute = _Attribute /$~ endOfLine /*/ opt blank /*/ char '.' /*/ identifier /*/ opt blank /*/ char '=' /*/ opt blank /*/ pattern_
 
 expression :: (SyntaxChar syn) => syn () Expression
-expression = trace "expression" $ iso fromExpression toExpression /$/ inlineExpression /*/ optional (char 'x' */ blank */ char '-' */ char '>' */ blankInline */ variantList)
+expression = trace "expression" $ iso fromExpression toExpression /$/ inlineExpression /*/ optional selectSubexpression
   where
+    selectSubexpression :: (SyntaxChar syn) => syn () VariantList
+    selectSubexpression = trace "selectExpression" $ opt blank */ char '-' */ char '>' */ opt blankInline */ variantList
+
     fromExpression (Inline i) = (i, Nothing)
     fromExpression (Select i v) = (i, Just v)
-    toExpression (i, v) = trace "toExpression" $ maybe (Inline i) (Select i) v
+    toExpression (i, v) = maybe (trace "toExpression Inline" $ Inline i) (trace "toExpression Seelect" $ Select i) v
 
 pattern_ :: (SyntaxChar syn) => syn () Pattern
 pattern_ = _Pattern /$/ sisome patternElement
@@ -107,8 +110,6 @@ patternElement =
     inlineText = sisome textChar
     indentedChar :: (SyntaxChar syn) => syn () Char
     indentedChar = satisfy (`notElem` ("{}[*.\r\n" :: String))
-    inlinePlaceable :: (SyntaxChar syn) => syn () Expression
-    inlinePlaceable = trace "inlinePlaceable" $ char '{' */ opt_ blank */ expression /* opt_ blank /* char '}'
     block :: forall syn. (SyntaxChar syn) => syn () PatternElement
     block = Util.bool blankInline >>> sibind (iso f g)
       where
@@ -120,14 +121,14 @@ patternElement =
         g :: PatternElement -> syn Bool PatternElement
         g = const $ f True
 
+inlinePlaceable :: (SyntaxChar syn) => syn () Expression
+inlinePlaceable = trace "inlinePlaceable" $ char '{' */ opt_ blank */ expression /* opt_ blank /* char '}'
+
 textChar :: (SyntaxChar syn) => syn () Char
 textChar = satisfy (`notElem` ("{}\r\n" :: String))
 
-quotedChar :: (SyntaxChar syn) => syn () Char
-quotedChar = satisfy (`notElem` ("\"\\\r\n" :: String))
-
 variantList :: (SyntaxChar syn) => syn () VariantList
-variantList = _VariantList . semiIso validate validate /$/ simany variant
+variantList = trace "variantList" $ _VariantList . semiIso validate validate /$/ simany variant
   where
     validate :: [Variant] -> Either String [Variant]
     validate vs =
@@ -137,28 +138,37 @@ variantList = _VariantList . semiIso validate validate /$/ simany variant
             _ -> Left "more than one default variant"
 
 variant :: (SyntaxChar syn) => syn () Variant
-variant = iso fromVariant toVariant /$~ (endOfLine */ blank */ optional (char '*') /*/ variantKey /*/ (blankInline */ pattern_))
+variant = iso fromVariant toVariant /$~ endOfLine */ opt_ blank */ optional (char '*') /*/ variantKey /*/ (opt_ blankInline */ pattern_)
   where
     fromVariant Variant{..} = (if isDefault then Just () else Nothing, key, value)
     toVariant (isJust @() -> isDefault, key, value) = Variant{..}
 
 variantKey :: (SyntaxChar syn) => syn () VariantKey
-variantKey = undefined
+variantKey = _VariantKey /$/ char '[' */ opt_ blank */ Util.either identifier numberLiteral /* opt_ blank /* char ']'
 
 inlineExpression :: (SyntaxChar syn) => syn () InlineExpression
 inlineExpression =
     trace "inlineExpression" $
         choice
-            [ _StringLiteralExpression . _StringLiteral . textIso /$/ char '"' */ sisome quotedChar /* char '"'
+            [ _StringLiteralExpression /$/ stringLiteral
             , _NumberLiteralExpression /$/ numberLiteral
-            , _FunctionReference /$/ identifier /*/ callArguments
+            , trace "function reference" $ _FunctionReference /$/ identifier /*/ callArguments
+            , _MessageReference /$/ identifier /*/ optional attributeAccessor
+            , _TermReference /$~ char '-' */ identifier /*/ optional attributeAccessor /*/ optional callArguments
             , _VariableReference /$/ char '$' */ identifier
+            , _PlaceableExpression /$/ inlinePlaceable
             ]
+  where
+    attributeAccessor :: (SyntaxChar syn) => syn () Identifier
+    attributeAccessor = char '.' */ identifier
 
 callArguments :: (SyntaxChar syn) => syn () CallArguments
-callArguments = foo /$/ char '(' */ blankInline */ sepBy1 (Util.either namedArgument inlineExpression) (blankInline */ char ',' */ blankInline) /* blankInline /* char ')'
+callArguments = foo /$/ opt_ blank */ char '(' */ opt_ blank */ argumentList /* opt blank /* char ')'
   where
-    foo :: Iso' CallArguments [Either (Identifier, InlineExpression) InlineExpression]
+    argumentList :: (SyntaxChar syn) => syn () [Either (Identifier, Literal) InlineExpression]
+    argumentList = sepBy (Util.either namedArgument inlineExpression) (opt_ blank */ char ',' */ opt blank)
+
+    foo :: Iso' CallArguments [Either (Identifier, Literal) InlineExpression]
     foo =
         iso
             (\CallArguments{..} -> (Left <$> namedArguments) <> (Right <$> positionalArguments))
@@ -166,5 +176,5 @@ callArguments = foo /$/ char '(' */ blankInline */ sepBy1 (Util.either namedArgu
                 let (namedArguments, positionalArguments) = partitionEithers args
                  in CallArguments{..}
 
-namedArgument :: (SyntaxChar syn) => syn () (Identifier, InlineExpression)
-namedArgument = undefined
+namedArgument :: (SyntaxChar syn) => syn () (Identifier, Literal)
+namedArgument = (identifier /* opt_ blank /* char ':' /* opt blank) /*/ literal
