@@ -9,5 +9,8 @@ At the same time it allows, when necessary, to represent complex concepts from n
 
 ## Useful resources
 - Official repository containing the specification, the reference implementation of the parser and the documentation for Fluent: https://github.com/projectfluent/fluent
+- Unicode CLDR project: https://cldr.unicode.org/
+    - Language Plural Rules: https://www.unicode.org/cldr/charts/47/supplemental/language_plural_rules.html
+    - Computer-readable: https://github.com/unicode-org/cldr-json/tree/main/cldr-json/cldr-core/supplemental
 
 [Project Fluent]: https://projectfluent.org

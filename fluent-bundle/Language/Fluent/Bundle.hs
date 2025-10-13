@@ -1,16 +1,19 @@
 module Language.Fluent.Bundle
     ( Bundle (..)
     , buildBundle
+    , addFunction
     , getMessage
     , getTerm
     , formatPattern
     )
 where
 
-import Control.Lens (filtered, firstOf, to, traversed, view, _1)
+import Control.Applicative ((<|>))
+import Control.Lens (filtered, firstOf, to, traversed, view, (^.), _1)
 import Control.Monad (foldM, forM, unless, (<=<))
 import Control.Monad.Extra (concatMapM, mconcatMapM)
 import Data.Either.Extra (maybeToEither)
+import Data.Fixed (Pico)
 import Data.Functor ((<&>))
 import Data.List qualified as List
 import Data.Map.Strict (Map)
@@ -20,13 +23,14 @@ import Data.Text qualified as Text
 import Language.Fluent.Locale (Locale)
 import Language.Fluent.Message (Attribute (..), Message (Message), getAttribute, getValue)
 import Language.Fluent.Syntax.Entry (_MessageEntry, _TermEntry)
-import Language.Fluent.Syntax.Expression (CallArguments (..), Expression (..), InlineExpression (..), Pattern (Pattern), PatternElement (..))
+import Language.Fluent.Syntax.Expression (CallArguments (..), Expression (..), InlineExpression (..), Pattern (Pattern), PatternElement (..), Variant (..), VariantKey (..), VariantList (..))
 import Language.Fluent.Syntax.Expression qualified as Syntax
 import Language.Fluent.Syntax.Identifier (Identifier (Identifier))
 import Language.Fluent.Syntax.Literal (Literal, NumberLiteral (NumberLiteral), StringLiteral (StringLiteral))
 import Language.Fluent.Syntax.Message qualified as Syntax
 import Language.Fluent.Syntax.Resource (Resource (entries))
-import Language.Fluent.Value (CustomValue (CustomValue), SomeValue (NumberValue, SomeValue, StringValue), Value (format))
+import Language.Fluent.Value (CustomValue (CustomValue), Number (..), NumberType (..), SomeValue (NumberValue, SomeValue, StringValue), Value (format), numberIso)
+import Language.Fluent.Value qualified as Value
 import Prelude
 
 data Bundle = Bundle
@@ -40,6 +44,9 @@ data Bundle = Bundle
 
 buildBundle :: [Locale] -> [Resource] -> Bundle
 buildBundle locales resources = Bundle{useIsolating = True, functions = mempty, ..}
+
+addFunction :: Text -> ([SomeValue] -> Map Text SomeValue -> Either String SomeValue) -> Bundle -> Bundle
+addFunction k v bundle = bundle{functions = Map.insert k v $ functions bundle}
 
 getMessage :: Bundle -> Text -> Maybe Message
 getMessage Bundle{..} (Identifier -> identifier) =
@@ -93,13 +100,26 @@ instance FormatPattern (Either String Text) where
             | otherwise = f
           where
             f = formatExpression expr
+        resolveVariantKey :: VariantKey -> SomeValue
+        resolveVariantKey (VariantKey (Left (Identifier identifier))) = StringValue identifier
+        resolveVariantKey (VariantKey (Right number)) = NumberValue $ number ^. numberIso
         resolveExpression :: Expression -> Either String SomeValue
         resolveExpression (Inline expr) = resolveInlineExpression expr
-        resolveExpression (Select expr variants) = undefined
+        resolveExpression (Select expr (VariantList variants)) = do
+            selector <- resolveInlineExpression expr
+            Variant{value} <-
+                maybeToEither ("Something not found") $
+                    List.find
+                        ( \Variant{..} ->
+                            Value.matches locales selector (resolveVariantKey key)
+                        )
+                        variants
+                        <|> List.find isDefault variants
+            resolvePattern bundle scope value
         formatExpression :: Expression -> Either String Text
         formatExpression = format locales <=< resolveExpression
         resolveLiteral :: Literal -> Either String SomeValue
-        resolveLiteral (Left (NumberLiteral n)) = Right $ NumberValue n
+        resolveLiteral (Left number) = Right . NumberValue $ number ^. numberIso
         resolveLiteral (Right (StringLiteral s)) = Right $ StringValue s
         resolveInlineExpression :: InlineExpression -> Either String SomeValue
         resolveInlineExpression (StringLiteralExpression s) = resolveLiteral $ Right s
@@ -148,9 +168,39 @@ instance FormatPattern (Either String Text) where
                 (Map.lookup identifier scope)
         resolveInlineExpression (PlaceableExpression expr) = resolveExpression expr
 
+instance {-# OVERLAPPING #-} (FormatPattern r) => FormatPattern (FluentArg Int -> r) where
+    formatPattern' :: Bundle -> Map Text SomeValue -> Pattern -> (Text, Int) -> r
+    formatPattern' b args p (k, v) = formatPattern' b args p (k, NumberValue n)
+      where
+        n =
+            Number
+                { numberType = Cardinal
+                , numberValue = fromIntegral v
+                , minimumFractionDigits = 0
+                }
+
+instance {-# OVERLAPPING #-} (FormatPattern r) => FormatPattern (FluentArg Pico -> r) where
+    formatPattern' :: Bundle -> Map Text SomeValue -> Pattern -> (Text, Pico) -> r
+    formatPattern' b args p (k, v) = formatPattern' b args p (k, NumberValue n)
+      where
+        n =
+            Number
+                { numberType = Cardinal
+                , numberValue = v
+                , minimumFractionDigits = 0
+                }
+
+instance {-# OVERLAPPING #-} (FormatPattern r) => FormatPattern (FluentArg Text -> r) where
+    formatPattern' :: Bundle -> Map Text SomeValue -> Pattern -> (Text, Text) -> r
+    formatPattern' b args p (k, v) = formatPattern' b args p (k, StringValue v)
+
 instance {-# OVERLAPPING #-} (FormatPattern r) => FormatPattern (FluentArg SomeValue -> r) where
     formatPattern' :: Bundle -> Map Text SomeValue -> Pattern -> (Text, SomeValue) -> r
     formatPattern' b args p (k, v) = formatPattern' b (Map.insert k v args) p
+
+instance {-# OVERLAPPING #-} (FormatPattern r) => FormatPattern (Map Text SomeValue -> r) where
+    formatPattern' :: Bundle -> Map Text SomeValue -> Pattern -> Map Text SomeValue -> r
+    formatPattern' b args p scope = formatPattern' b (scope `Map.union` args) p
 
 instance (Value a, FormatPattern r) => FormatPattern (FluentArg a -> r) where
     formatPattern' :: Bundle -> Map Text SomeValue -> Pattern -> (Text, a) -> r

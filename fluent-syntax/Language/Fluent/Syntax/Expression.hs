@@ -153,10 +153,10 @@ inlineExpression =
             [ _StringLiteralExpression /$/ stringLiteral
             , _NumberLiteralExpression /$/ numberLiteral
             , trace "function reference" $ _FunctionReference /$/ identifier /*/ callArguments
-            , _MessageReference /$/ identifier /*/ optional attributeAccessor
-            , _TermReference /$~ char '-' */ identifier /*/ optional attributeAccessor /*/ optional callArguments
-            , _VariableReference /$/ char '$' */ identifier
-            , _PlaceableExpression /$/ inlinePlaceable
+            , trace "message reference" $ _MessageReference /$/ identifier /*/ optional attributeAccessor
+            , trace "term reference" $ _TermReference /$~ char '-' */ identifier /*/ optional attributeAccessor /*/ optional callArguments
+            , trace "variable reference" $ _VariableReference /$/ char '$' */ identifier
+            , trace "placeable expression" $ _PlaceableExpression /$/ inlinePlaceable
             ]
   where
     attributeAccessor :: (SyntaxChar syn) => syn () Identifier
