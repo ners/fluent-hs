@@ -1,17 +1,15 @@
 cabal-version: 3.0
-name: fluent
+name: fluent-syntax
 version: 0.1.0.0
 synopsis: Haskell implementation of Project Fluent
 homepage: https://github.com/ners/fluent-hs/blob/master/README.md
 license: Apache-2.0
-license-file: LICENCE.md
 author: ners
 maintainer: ners@gmx.ch
 bug-reports: https://github.com/ners/fluent-hs/issues
 category: System
 build-type: Simple
 extra-source-files:
-  CHANGELOG.md
   README.md
 
 source-repository head
@@ -58,9 +56,9 @@ common common
     text,
     unordered-containers,
 
-library fluent-syntax
+library
   import: common
-  hs-source-dirs: fluent-syntax
+  hs-source-dirs: .
   build-depends:
     attoparsec,
     mono-traversable,
@@ -69,7 +67,6 @@ library fluent-syntax
     syntax-attoparsec,
 
   exposed-modules:
-    Util
     Language.Fluent.Syntax.Comment
     Language.Fluent.Syntax.Entry
     Language.Fluent.Syntax.Expression
@@ -79,36 +76,4 @@ library fluent-syntax
     Language.Fluent.Syntax.Resource
 
   other-modules:
-
-library fluent-bundle
-  import: common
-  hs-source-dirs: fluent-bundle
-  build-depends:
-    attoparsec,
-    extra,
-    fluent-syntax,
-
-  exposed-modules:
-    Language.Fluent.Bundle
-    Language.Fluent.Locale
-    Language.Fluent.Message
-    Language.Fluent.Value
-
-  other-modules:
-
-test-suite spec
-  import: common
-  ghc-options: -threaded
-  type: exitcode-stdio-1.0
-  hs-source-dirs: test
-  main-is: Main.hs
-  build-depends:
-    Glob,
-    QuickCheck,
-    attoparsec,
-    fluent-syntax,
-    fluent-bundle,
-    hspec,
-    pretty-simple,
-    syntax-attoparsec,
-    syntax-printer,
+    Util

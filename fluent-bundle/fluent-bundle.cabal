@@ -1,0 +1,90 @@
+cabal-version: 3.0
+name: fluent-bundle
+version: 0.1.0.0
+synopsis: Haskell implementation of Project Fluent
+homepage: https://github.com/ners/fluent-hs/blob/master/README.md
+license: Apache-2.0
+author: ners
+maintainer: ners@gmx.ch
+bug-reports: https://github.com/ners/fluent-hs/issues
+category: System
+build-type: Simple
+extra-source-files:
+  README.md
+
+source-repository head
+  type: git
+  location: https://github.com/ners/fluent-hs
+
+common common
+  default-language: GHC2021
+  ghc-options:
+    -Weverything
+    -Wno-unsafe
+    -Wno-missing-safe-haskell-mode
+    -Wno-missing-export-lists
+    -Wno-missing-import-lists
+    -Wno-missing-kind-signatures
+    -Wno-all-missed-specialisations
+
+  default-extensions:
+    ApplicativeDo
+    BlockArguments
+    DataKinds
+    DefaultSignatures
+    DeriveAnyClass
+    DeriveGeneric
+    DerivingStrategies
+    DerivingVia
+    ExplicitNamespaces
+    LambdaCase
+    NoImplicitPrelude
+    OverloadedLabels
+    OverloadedRecordDot
+    OverloadedStrings
+    RecordWildCards
+    RecursiveDo
+    TemplateHaskell
+    TypeFamilies
+    ViewPatterns
+
+  build-depends:
+    base >=4.16 && <5,
+    bytestring,
+    containers,
+    lens,
+    text,
+    unordered-containers,
+
+library
+  import: common
+  hs-source-dirs: .
+  build-depends:
+    attoparsec,
+    extra,
+    fluent-syntax,
+
+  exposed-modules:
+    Language.Fluent.Bundle
+    Language.Fluent.Locale
+    Language.Fluent.Message
+    Language.Fluent.Value
+
+  other-modules:
+
+test-suite spec
+  import: common
+  ghc-options: -threaded
+  type: exitcode-stdio-1.0
+  hs-source-dirs: test
+  main-is: Main.hs
+  build-depends:
+    Glob,
+    QuickCheck,
+    attoparsec,
+    fluent-syntax,
+    fluent-bundle,
+    hspec,
+    pretty-simple,
+    syntax-attoparsec,
+    syntax-printer,
