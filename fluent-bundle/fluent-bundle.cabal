@@ -26,6 +26,7 @@ common common
     -Wno-missing-import-lists
     -Wno-missing-kind-signatures
     -Wno-all-missed-specialisations
+    -Wno-name-shadowing
 
   default-extensions:
     ApplicativeDo
