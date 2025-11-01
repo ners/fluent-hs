@@ -10,7 +10,7 @@ import Util qualified
 import Prelude
 
 newtype Resource = Resource {entries :: [Entry]}
-    deriving stock (Show)
+    deriving stock (Eq, Show)
 
 resource :: (SyntaxChar syn) => syn () Resource
 resource = iso fromResource toResource /$/ sisome (Util.either blankBlock entry)

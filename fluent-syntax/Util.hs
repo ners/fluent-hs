@@ -8,8 +8,8 @@ import Control.SIArrow (SIArrow (sisome), (*/), (/$/))
 import Data.Bool qualified as Bool
 import Data.Maybe (isJust)
 import Data.MonoTraversable (MonoPointed (opoint))
-import Data.Syntax (Syntax (takeWhile, takeWhile1))
-import Data.Syntax.Char (SyntaxChar, SyntaxText, endOfLine, spaces, spaces1)
+import Data.Syntax (Syntax (takeWhile1))
+import Data.Syntax.Char (SyntaxChar, endOfLine, spaces1)
 import Data.Syntax.Combinator (opt_, optional)
 import Data.Text (Text)
 import Data.Text qualified as Text

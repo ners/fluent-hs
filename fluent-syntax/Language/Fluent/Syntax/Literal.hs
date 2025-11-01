@@ -6,7 +6,7 @@ import Control.Lens.TH (makePrisms)
 import Control.SIArrow (SIArrow (sisome), (*/), (/$/), (/$~), (/*), (/*/))
 import Data.Attoparsec.Text (parseOnly)
 import Data.Char (isDigit)
-import Data.Syntax (Syntax (char, satisfy, string))
+import Data.Syntax (Syntax (char, satisfy))
 import Data.Syntax.Attoparsec.Text (getParser_)
 import Data.Syntax.Char (SyntaxChar)
 import Data.Syntax.Combinator (optional)
@@ -16,10 +16,10 @@ import Util (either, textIso)
 import Prelude
 
 newtype NumberLiteral = NumberLiteral Text
-    deriving stock (Show)
+    deriving stock (Eq, Show)
 
 newtype StringLiteral = StringLiteral Text
-    deriving stock (Show)
+    deriving stock (Eq, Show)
 
 type Literal = Either NumberLiteral StringLiteral
 

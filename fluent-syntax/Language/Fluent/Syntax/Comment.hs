@@ -1,16 +1,16 @@
 module Language.Fluent.Syntax.Comment where
 
-import Control.Lens (Cons (_Cons), iso)
+import Control.Lens (Cons (_Cons))
 import Control.Lens.TH (makePrisms)
 import Control.SIArrow (SIArrow (simany), (/$/), (/*/))
 import Data.Syntax (Syntax (satisfy))
-import Data.Syntax.Char (SyntaxChar, SyntaxText)
+import Data.Syntax.Char (SyntaxChar)
 import Data.Text (Text)
 import Util
 import Prelude
 
 newtype Comment = Comment Text
-    deriving stock (Show)
+    deriving stock (Eq, Show)
 
 makePrisms ''Comment
 

@@ -10,11 +10,10 @@ where
 
 import Control.Applicative ((<|>))
 import Control.Lens (filtered, firstOf, to, traversed, view, (^.), _1)
-import Control.Monad (foldM, forM, unless, (<=<))
-import Control.Monad.Extra (concatMapM, mconcatMapM)
+import Control.Monad (forM, (<=<))
+import Control.Monad.Extra (mconcatMapM)
 import Data.Either.Extra (maybeToEither)
 import Data.Fixed (Pico)
-import Data.Functor ((<&>))
 import Data.List qualified as List
 import Data.Map.Strict (Map)
 import Data.Map.Strict qualified as Map
@@ -26,7 +25,7 @@ import Language.Fluent.Syntax.Entry (_MessageEntry, _TermEntry)
 import Language.Fluent.Syntax.Expression (CallArguments (..), Expression (..), InlineExpression (..), Pattern (Pattern), PatternElement (..), Variant (..), VariantKey (..), VariantList (..))
 import Language.Fluent.Syntax.Expression qualified as Syntax
 import Language.Fluent.Syntax.Identifier (Identifier (Identifier))
-import Language.Fluent.Syntax.Literal (Literal, NumberLiteral (NumberLiteral), StringLiteral (StringLiteral))
+import Language.Fluent.Syntax.Literal (Literal, StringLiteral (StringLiteral))
 import Language.Fluent.Syntax.Message qualified as Syntax
 import Language.Fluent.Syntax.Resource (Resource (entries))
 import Language.Fluent.Value (CustomValue (CustomValue), Number (..), NumberType (..), SomeValue (NumberValue, SomeValue, StringValue), Value (format), numberIso)

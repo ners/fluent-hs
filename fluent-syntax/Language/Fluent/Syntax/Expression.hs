@@ -11,7 +11,7 @@ import Data.Either (partitionEithers)
 import Data.Maybe (fromMaybe, isJust)
 import Data.Syntax (Syntax (char, satisfy))
 import Data.Syntax.Char (SyntaxChar, endOfLine)
-import Data.Syntax.Combinator (choice, opt, opt_, optional, sepBy, sepBy1)
+import Data.Syntax.Combinator (choice, opt, opt_, optional, sepBy)
 import Data.Text (Text)
 import Debug.Trace (trace)
 import Language.Fluent.Syntax.Identifier
@@ -20,12 +20,12 @@ import Util
 import Prelude
 
 data Attribute = Attribute Identifier Pattern
-    deriving stock (Show)
+    deriving stock (Eq, Show)
 
 data Expression
     = Select InlineExpression VariantList
     | Inline InlineExpression
-    deriving stock (Show)
+    deriving stock (Eq, Show)
 
 data InlineExpression
     = StringLiteralExpression StringLiteral
@@ -35,34 +35,34 @@ data InlineExpression
     | TermReference Identifier (Maybe Identifier) (Maybe CallArguments)
     | VariableReference Identifier
     | PlaceableExpression Expression
-    deriving stock (Show)
+    deriving stock (Eq, Show)
 
 data Variant = Variant
     { key :: VariantKey
     , value :: Pattern
     , isDefault :: Bool
     }
-    deriving stock (Show)
+    deriving stock (Eq, Show)
 
 newtype VariantKey = VariantKey (Either Identifier NumberLiteral)
-    deriving stock (Show)
+    deriving stock (Eq, Show)
 
 newtype VariantList = VariantList [Variant]
-    deriving stock (Show)
+    deriving stock (Eq, Show)
 
 data PatternElement
     = TextElement Text
     | PlaceablePattern Expression
-    deriving stock (Show)
+    deriving stock (Eq, Show)
 
 newtype Pattern = Pattern [PatternElement]
-    deriving stock (Show)
+    deriving stock (Eq, Show)
 
 data CallArguments = CallArguments
     { positionalArguments :: [InlineExpression]
     , namedArguments :: [(Identifier, Literal)]
     }
-    deriving stock (Show)
+    deriving stock (Eq, Show)
 
 makePrisms ''PatternElement
 

@@ -6,11 +6,11 @@ import Control.SIArrow (SIArrow (simany, sisome), (/$/), (/*), (/*/))
 import Data.Syntax (Syntax (char))
 import Data.Syntax.Char (SyntaxChar)
 import Data.Syntax.Combinator (opt)
-import Language.Fluent.Syntax.Comment
+import Language.Fluent.Syntax.Comment hiding (comment)
 import Language.Fluent.Syntax.Expression
 import Language.Fluent.Syntax.Identifier
 import Util (blankInline, either)
-import Prelude
+import Prelude hiding (id)
 
 data Message = Message
     { id :: Identifier
@@ -18,7 +18,7 @@ data Message = Message
     , attributes :: [Attribute]
     , comment :: Maybe Comment
     }
-    deriving stock (Show)
+    deriving stock (Eq, Show)
 
 makePrisms ''Message
 

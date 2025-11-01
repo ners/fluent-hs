@@ -45,7 +45,6 @@ common common
     OverloadedStrings
     RecordWildCards
     RecursiveDo
-    TemplateHaskell
     TypeFamilies
     ViewPatterns
 

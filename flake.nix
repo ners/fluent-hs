@@ -43,7 +43,7 @@
         pkgs.haskell.packages;
       hpsFor = pkgs: { default = pkgs.haskellPackages; } // ghcsFor pkgs;
       pnames = map (path: baseNameOf (dirOf path)) (lib.fileset.toList (lib.fileset.fileFilter (file: file.hasExt "cabal") ./.));
-      haskell-overlay = lib.composeManyExtensions [
+      haskell-overlay = final: prev: lib.composeManyExtensions [
         inputs.syntax.overlays.haskell
         (hfinal: hprev: lib.genAttrs pnames (pname: hfinal.callCabal2nix pname (sourceFilter ./${pname}) { }))
       ];
@@ -52,7 +52,7 @@
           haskell = prev.haskell // {
             packageOverrides = lib.composeManyExtensions [
               prev.haskell.packageOverrides
-              haskell-overlay
+              (haskell-overlay final prev)
             ];
           };
         })
@@ -70,8 +70,9 @@
         let
           pkgs = pkgs'.extend overlay;
           hps = hpsFor pkgs;
+          pname = "fluent";
           libs = pkgs.buildEnv {
-            name = "fluent-libs";
+            name = "${pname}-libs";
             paths =
               lib.mapCartesianProduct
                 ({ hp, pname }: hp.${pname})
@@ -79,20 +80,20 @@
             pathsToLink = [ "/lib" ];
           };
           docs = pkgs.buildEnv {
-            name = "fluent-docs";
+            name = "${pname}-docs";
             paths = map (pname: pkgs.haskell.lib.documentationTarball hps.default.${pname}) pnames;
           };
           sdist = pkgs.buildEnv {
-            name = "fluent-sdist";
+            name = "${pname}-sdist";
             paths = map (pname: pkgs.haskell.lib.sdistTarball hps.default.${pname}) pnames;
           };
-          docsAndSdist = pkgs.linkFarm "fluent-docsAndSdist" { inherit docs sdist; };
+          docsAndSdist = pkgs.linkFarm "${pname}-docsAndSdist" { inherit docs sdist; };
         in
         {
           formatter.${system} = pkgs.nixpkgs-fmt;
           legacyPackages.${system} = pkgs;
           packages.${system}.default = pkgs.symlinkJoin {
-            name = "fluent-all";
+            name = "${pname}-all";
             paths = [ libs docsAndSdist ];
             inherit (hps.default.syntax) meta;
           };

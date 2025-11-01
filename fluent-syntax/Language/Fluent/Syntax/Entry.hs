@@ -5,7 +5,6 @@ import Control.SIArrow (SIArrow (simany), (*/), (/$/), (/$~), (/*), (/*/))
 import Data.Syntax (Syntax (char))
 import Data.Syntax.Char (SyntaxChar, endOfLine)
 import Data.Syntax.Combinator (choice, opt)
-import Debug.Trace (trace)
 import Language.Fluent.Syntax.Comment (Comment, comment)
 import Language.Fluent.Syntax.Expression (Attribute, Pattern, attribute, pattern_)
 import Language.Fluent.Syntax.Identifier (Identifier, identifier)
@@ -17,7 +16,7 @@ data Entry
     = MessageEntry Message
     | TermEntry Identifier Pattern [Attribute]
     | CommentEntry Comment
-    deriving stock (Show)
+    deriving stock (Eq, Show)
 
 makePrisms ''Entry
 
