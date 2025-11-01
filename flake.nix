@@ -43,7 +43,7 @@
         pkgs.haskell.packages;
       hpsFor = pkgs: { default = pkgs.haskellPackages; } // ghcsFor pkgs;
       pnames = map (path: baseNameOf (dirOf path)) (lib.fileset.toList (lib.fileset.fileFilter (file: file.hasExt "cabal") ./.));
-      haskell-overlay = final: prev: lib.composeManyExtensions [
+      haskell-overlay = lib.composeManyExtensions [
         inputs.syntax.overlays.haskell
         (hfinal: hprev: lib.genAttrs pnames (pname: hfinal.callCabal2nix pname (sourceFilter ./${pname}) { }))
       ];
@@ -52,7 +52,7 @@
           haskell = prev.haskell // {
             packageOverrides = lib.composeManyExtensions [
               prev.haskell.packageOverrides
-              (haskell-overlay final prev)
+              haskell-overlay
             ];
           };
         })
