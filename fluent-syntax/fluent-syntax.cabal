@@ -66,6 +66,7 @@ library
     semi-iso,
     syntax,
     syntax-attoparsec,
+    syntax-printer,
 
   exposed-modules:
     Language.Fluent.Syntax.Comment
