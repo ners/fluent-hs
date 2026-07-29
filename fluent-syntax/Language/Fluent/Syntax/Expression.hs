@@ -13,7 +13,6 @@ import Data.Syntax (Syntax (char, satisfy))
 import Data.Syntax.Char (SyntaxChar, endOfLine)
 import Data.Syntax.Combinator (choice, opt, opt_, optional, sepBy)
 import Data.Text (Text)
-import Debug.Trace (trace)
 import Language.Fluent.Syntax.Identifier
 import Language.Fluent.Syntax.Literal
 import Util
@@ -86,14 +85,14 @@ attribute :: (SyntaxChar syn) => syn () Attribute
 attribute = _Attribute /$~ endOfLine /*/ opt blank /*/ char '.' /*/ identifier /*/ opt blank /*/ char '=' /*/ opt blank /*/ pattern_
 
 expression :: (SyntaxChar syn) => syn () Expression
-expression = trace "expression" $ iso fromExpression toExpression /$/ inlineExpression /*/ optional selectSubexpression
+expression = iso fromExpression toExpression /$/ inlineExpression /*/ optional selectSubexpression
   where
     selectSubexpression :: (SyntaxChar syn) => syn () VariantList
-    selectSubexpression = trace "selectExpression" $ opt blank */ char '-' */ char '>' */ opt blankInline */ variantList
+    selectSubexpression = opt blank */ char '-' */ char '>' */ opt blankInline */ variantList
 
     fromExpression (Inline i) = (i, Nothing)
     fromExpression (Select i v) = (i, Just v)
-    toExpression (i, v) = maybe (trace "toExpression Inline" $ Inline i) (trace "toExpression Seelect" $ Select i) v
+    toExpression (i, v) = maybe (Inline i) (Select i) v
 
 pattern_ :: (SyntaxChar syn) => syn () Pattern
 pattern_ = _Pattern /$/ sisome patternElement
@@ -122,13 +121,13 @@ patternElement =
         g = const $ f True
 
 inlinePlaceable :: (SyntaxChar syn) => syn () Expression
-inlinePlaceable = trace "inlinePlaceable" $ char '{' */ opt_ blank */ expression /* opt_ blank /* char '}'
+inlinePlaceable = char '{' */ opt_ blank */ expression /* opt_ blank /* char '}'
 
 textChar :: (SyntaxChar syn) => syn () Char
 textChar = satisfy (`notElem` ("{}\r\n" :: String))
 
 variantList :: (SyntaxChar syn) => syn () VariantList
-variantList = trace "variantList" $ _VariantList . semiIso validate validate /$/ simany variant
+variantList = _VariantList . semiIso validate validate /$/ simany variant
   where
     validate :: [Variant] -> Either String [Variant]
     validate vs =
@@ -148,16 +147,15 @@ variantKey = _VariantKey /$/ char '[' */ opt_ blank */ Util.either identifier nu
 
 inlineExpression :: (SyntaxChar syn) => syn () InlineExpression
 inlineExpression =
-    trace "inlineExpression" $
-        choice
-            [ _StringLiteralExpression /$/ stringLiteral
-            , _NumberLiteralExpression /$/ numberLiteral
-            , trace "function reference" $ _FunctionReference /$/ identifier /*/ callArguments
-            , trace "message reference" $ _MessageReference /$/ identifier /*/ optional attributeAccessor
-            , trace "term reference" $ _TermReference /$~ char '-' */ identifier /*/ optional attributeAccessor /*/ optional callArguments
-            , trace "variable reference" $ _VariableReference /$/ char '$' */ identifier
-            , trace "placeable expression" $ _PlaceableExpression /$/ inlinePlaceable
-            ]
+    choice
+        [ _StringLiteralExpression /$/ stringLiteral
+        , _NumberLiteralExpression /$/ numberLiteral
+        , _FunctionReference /$/ identifier /*/ callArguments
+        , _MessageReference /$/ identifier /*/ optional attributeAccessor
+        , _TermReference /$~ char '-' */ identifier /*/ optional attributeAccessor /*/ optional callArguments
+        , _VariableReference /$/ char '$' */ identifier
+        , _PlaceableExpression /$/ inlinePlaceable
+        ]
   where
     attributeAccessor :: (SyntaxChar syn) => syn () Identifier
     attributeAccessor = char '.' */ identifier
