@@ -3,7 +3,7 @@ module Language.Fluent.Syntax.Literal where
 import Control.Lens (iso)
 import Control.Lens.SemiIso (ASemiIso', semiIso)
 import Control.Lens.TH (makePrisms)
-import Control.SIArrow (SIArrow (sisome), (*/), (/$/), (/$~), (/*), (/*/))
+import Control.SIArrow (SIArrow (simany, sisome), (*/), (/$/), (/$~), (/*), (/*/))
 import Data.Attoparsec.Text (parseOnly)
 import Data.Char (isDigit)
 import Data.Syntax (Syntax (char, satisfy))
@@ -38,7 +38,7 @@ numberLiteral = (_NumberLiteral . foo) /$~ bar
     digits = iso Text.unpack Text.pack /$/ sisome (satisfy isDigit)
 
 stringLiteral :: (SyntaxChar syn) => syn () StringLiteral
-stringLiteral = _StringLiteral . textIso /$/ char '"' */ sisome quotedChar /* char '"'
+stringLiteral = _StringLiteral . textIso /$/ char '"' */ simany quotedChar /* char '"'
 
 quotedChar :: (SyntaxChar syn) => syn () Char
 quotedChar = satisfy (`notElem` ("\"\\\r\n" :: String))
